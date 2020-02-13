@@ -10,7 +10,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     port: 3306,
     user: 'root',
-    password: 'd3v3l0p3r',
+    password: 'password',
     database: 'employeeTracker_DB'
 });
 
@@ -20,6 +20,7 @@ connection.connect(err => {
     }
     console.log(`Connected as id: ${connection.threadId}`)
 });
+
 
 function addToTracker() {
 inquirer.prompt ([
@@ -80,16 +81,50 @@ inquirer.prompt ([
 
 function viewAllEmployees(){
     // Display all employees;
-    addToTracker()
+    connection.query('select * from employee', function (err, res) {
+      console.log(res);
+      addToTracker()
+    })
 };
 
 function viewByDepartment() {
     // Display employees by department;
-    addToTracker()
+    connection.query('select * from department', function (err, res) {
+      let departmentChoices = res.map(function (department) {
+        return {name: department.name, value: department.id}
+      })
+      inquirer.prompt(
+        {
+          type: 'list',
+          name: 'departmentChoice',
+          message: 'Select a department.',
+          choices: departmentChoices
+        }
+      ).then(function (userChoice) {
+        console.log(userChoice.departmentChoice);
+        connection.query(`select first_name, last_name from employee where role_id=${userChoice.departmentChoice}`,
+          function (err, res) {
+            console.log(res);
+            addToTracker()
+          }
+        )
+
+      })
+    })
 };
+
+async function getManagers() {
+  let managerList = []
+  await connection.query('select * from employee where manager_id=null', function(er, res) {
+    console.log(res);
+    managerList = res
+  })
+  return managerList
+}
 
 function viewByManager() {
     // Display employees by manager;
+    getManagers().then(list=>console.log(list))
     addToTracker()
 };
 
@@ -105,7 +140,7 @@ function addEmployee() {
             type: "input",
             name: "addEmployee",
             message: "What is the employee's last name?",
-            answer: ""  
+            answer: ""
         },
         {
             type: "list",
@@ -126,7 +161,7 @@ function addEmployee() {
             type: "input",
             name: "addEmployee",
             message: "Who is the employee's manager?",
-            answer: ""  
+            answer: ""
         }
     ])
 };
@@ -236,6 +271,6 @@ function removeRole() {
 
 addToTracker()
 
-app.listen(PORT, () => {
-    console.log(`Server listening on: http://localhost: ${PORT}`)
-});
+// app.listen(PORT, () => {
+//     console.log(`Server listening on: http://localhost: ${PORT}`)
+// });
