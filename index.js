@@ -1,17 +1,13 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql');
-const express = require('express');
-//const consoleTable = require('console-table');
-const PORT = process.env.PORT || 8080
 
-const app = express()
 
 const connection = mysql.createConnection({
     host: 'localhost',
     port: 3306,
     user: 'root',
     password: '',
-    database: 'employeeTracker_DB'
+    database: 'employees_db'
 });
 
 connection.connect(err => {
@@ -22,11 +18,11 @@ connection.connect(err => {
 });
 
 
-function addToTracker() {
+function manageSystem() {
 inquirer.prompt ([
     {
         type: "list",
-        name: "addToTracker",
+        name: "manageSystem",
         message: "What would you like to do?",
         choices: [
             "View all employees",
@@ -34,15 +30,15 @@ inquirer.prompt ([
             "View all employees by manager",
             "Add an employee",
             "Remove an employee",
-            "Update employee role",
-            "Update employee manager",
+            "Update role",
+            "Update manager",
             "View all roles",
             "Add a role",
             "Remove a role"
         ]
     },
 ]).then(userChoice => {
-    switch(userChoice.addToTracker) {
+    switch(userChoice.manageSystem) {
         case "View all employees":
             viewAllEmployees();
             break;
@@ -83,12 +79,11 @@ function viewAllEmployees(){
     // Display all employees;
     connection.query('select * from employee', function (err, res) {
       console.log(res);
-      addToTracker()
+      manageSystem()
     })
 };
 
 function viewByDepartment() {
-    // Display employees by department;
     connection.query('select * from department', function (err, res) {
       let departmentChoices = res.map(function (department) {
         return {name: department.name, value: department.id}
@@ -105,7 +100,7 @@ function viewByDepartment() {
         connection.query(`select first_name, last_name from employee where role_id=${userChoice.departmentChoice}`,
           function (err, res) {
             console.log(res);
-            addToTracker()
+            manageSystem()
           }
         )
 
@@ -115,7 +110,7 @@ function viewByDepartment() {
 
 async function getManagers() {
   let managerList = []
-  await connection.query('select * from employee where manager_id=null', function(er, res) {
+  await connection.query('select * from employee where manager_id=null', function(err, res) {
     console.log(res);
     managerList = res
   })
@@ -125,7 +120,7 @@ async function getManagers() {
 function viewByManager() {
     // Display employees by manager;
     getManagers().then(list=>console.log(list))
-    addToTracker()
+    manageSystem()
 };
 
 function addEmployee() {
@@ -133,19 +128,19 @@ function addEmployee() {
         {
             type: "input",
             name: "addEmployee",
-            message: "What is the employee's first name?",
+            message: "Enter employee's first name.",
             answer: ""
         },
         {
             type: "input",
             name: "addEmployee",
-            message: "What is the employee's last name?",
+            message: "Enter employee's last name.",
             answer: ""
         },
         {
             type: "list",
             name: "addEmployee",
-            message: "What is the employee's role?",
+            message: "Select a role.",
             choices: [
                 "Sales Lead",
                 "Salesperson",
@@ -160,13 +155,13 @@ function addEmployee() {
         {
             type: "input",
             name: "addEmployee",
-            message: "Who is the employee's manager?",
+            message: "Who is this employee's manager?",
             answer: ""
         }
     ])
 };
 
-function addDepartment() {  //adds a new column to the table
+function addDepartment() {
     inquirer.prompt (
         {
             type: "input",
@@ -232,16 +227,16 @@ function updateManager() {
 };
 
 function viewAllRoles(){
-    // Display all roles;
-    addToTracker()
+    
+    manageSystem()
 };
 
-function addRole() {  //adds a new column to the table
+function addRole() { 
     inquirer.prompt (
         {
             type: "input",
             name: "addRole",
-            message: "What would you like to call the new role?",
+            message: "Enter new role.",
             answer: ""
         },
     )
@@ -261,16 +256,11 @@ function removeRole() {
                 "Account Manager",
                 "Accountant",
                 "Legal Team Lead",
-                "Janitor",
-                "Copy Machine Guy"
+                "Lawyer"
             ]
         },
     ])
 };
 };
 
-addToTracker()
-
-// app.listen(PORT, () => {
-//     console.log(`Server listening on: http://localhost: ${PORT}`)
-// });
+manageSystem()
